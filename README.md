@@ -5,6 +5,10 @@ This mini example also shows how to declare static files directory for the app,
 app.mount("/assets", StaticFiles(directory="assets"), name="assets")
 ```
 
+Folder structure:
+<img width="283" alt="Screenshot 2024-03-10 at 16 51 20" src="https://github.com/yavuzakyazici/fastapi_video/assets/148442912/c9c3e369-551c-41cf-8626-3961721cf65f">
+
+
 how to upload file to that directory,
 ```py
 @app.post("/video")
