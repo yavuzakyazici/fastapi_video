@@ -151,12 +151,46 @@ def range_requests_response(
         status_code=status_code,
     )
 ```
-First time you download te video 206 partial header and eTag was sent back.
-<img width="774" alt="1" src="https://github.com/yavuzakyazici/fastapi_video/assets/148442912/af360549-98da-4ff6-8520-800c680d0364">
+First request gets 200 response fpr the file..
+<img width="774" alt="1" src="https://github.com/yavuzakyazici/fastapi_video/assets/148442912/dd97add5-7bed-4fad-976b-984e9c58cb91">
+
+First time you download the video file clearly shows 206 partial header meaning streaming with smaller chunks.
+<img width="777" alt="2" src="https://github.com/yavuzakyazici/fastapi_video/assets/148442912/6e2e76ab-7dc7-4036-a92a-3ad6c5f55c6a">
+
+Server also sends an eTag along with 206 header..
+<img width="774" alt="3" src="https://github.com/yavuzakyazici/fastapi_video/assets/148442912/83ebc6cc-8c84-4f2e-bbde-70d3cdb143c8">
+
 
 Second time, if the browser finds a matching eTag, server sends back 304 unmodified header.
-Then, cached video is used.
-<img width="776" alt="2" src="https://github.com/yavuzakyazici/fastapi_video/assets/148442912/5f5df00e-2b9f-4013-9c96-d8a3f32c6f54">
+this is done via the if-none-match header
+<img width="774" alt="4" src="https://github.com/yavuzakyazici/fastapi_video/assets/148442912/2cdef557-65bf-4968-9e33-8efe40b40e62">
+<img width="774" alt="5" src="https://github.com/yavuzakyazici/fastapi_video/assets/148442912/1ac47a38-7230-4402-973a-cf8019bcb71a">
+
+You can see it in the code clearly here:
+```py
+ """Check if the browser sent etag matches the videos etag"""
+    request_if_non_match_etag = request.headers.get("if-none-match")
+
+    """if there is a match return 304 unmodified instead of 206 response without video file"""
+    if request_if_non_match_etag == etag:
+        headers = {
+            "cache-control": "public, max-age=86400, stale-while-revalidate=2592000",
+            "etag" : etag,
+            "last-modified":str(last_modified),
+        }
+        status_code = status.HTTP_304_NOT_MODIFIED
+        return Response(None, status_code=status_code, headers=headers)
+```
+If there is no matching eTag found this means file is modified since eTag was and MD5 based on last-modified and the file size.
+Which you can also see clearly in the code here:
+```py
+   """Compose etag from last_modified and file_size"""
+    last_modified = datetime.fromtimestamp(os.stat(file_path).st_mtime).strftime("%a, %d %b %Y %H:%M:%S")
+    etag_base = str(last_modified) + "-" + str(file_size)
+    etag = f'"{md5_hexdigest(etag_base.encode(), usedforsecurity=False)}"'
+```
+
+However, if the eTag is the same ( look at the code above ) 304 unmodified header is sent and cached video is used.
 
 Unfortunately does not work on Safari meaning Safari does not send if-none-match header.
 However, I tested on Chrome, Opera and Mozilla Developer edition and it works :)
