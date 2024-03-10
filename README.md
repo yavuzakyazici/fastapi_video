@@ -1,8 +1,36 @@
-An example streaming file/video for FastAPI.
+An example of streaming file/video for FastAPI.
 This example demonstrates how to add a streaming file support to FastAPI with some extra capabilities.
-This mini example shows how to declare static files directory for the app,
+This mini example also shows how to declare static files directory for the app,
+```py
+app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+```
+
 how to upload file to that directory,
-how to stream from that directory and
+```py
+@app.post("/video")
+async def create_upload_file(file: UploadFile):
+    f = open(f'{video_folder_path+file.filename}', 'wb')
+    content = await file.read()
+    f.write(content)
+    # return the url to the uploaded file relative to the root of the domain
+    video_url=fastapi_base_url+"get_video_by_name/"
+    return {"video_url": urljoin(video_url, file.filename)}
+```
+
+how to stream from that directory
+```py
+@app.get("/get_video_by_name/{video_name}")
+def get_video(video_name:str, request: Request):
+    if video_name is not None:
+        video_url=video_folder_path+video_name
+        return range_requests_response(
+            request, file_path=video_url, content_type="video/mp4"
+        )
+    else:
+        raise HTTPException(status_code=404, detail="No videos found!")
+```
+
+and...
 how to send out 304 unmodified header once the file is cached.
 
 To get it working on your machine you can clone the repository.
@@ -151,10 +179,10 @@ def range_requests_response(
         status_code=status_code,
     )
 ```
-First request gets 200 response fpr the file..
+First request gets 200 response for the file..
 <img width="774" alt="1" src="https://github.com/yavuzakyazici/fastapi_video/assets/148442912/dd97add5-7bed-4fad-976b-984e9c58cb91">
 
-First time you download the video file clearly shows 206 partial header meaning streaming with smaller chunks.
+If you inspect the video on Google Chrome Dev tools when you first time you download the video file, network tab clearly show 206 partial header meaning streaming with smaller chunks.
 <img width="777" alt="2" src="https://github.com/yavuzakyazici/fastapi_video/assets/148442912/6e2e76ab-7dc7-4036-a92a-3ad6c5f55c6a">
 
 Server also sends an eTag along with 206 header..
@@ -181,7 +209,7 @@ You can see it in the code clearly here:
         status_code = status.HTTP_304_NOT_MODIFIED
         return Response(None, status_code=status_code, headers=headers)
 ```
-If there is no matching eTag found this means file is modified since eTag was and MD5 based on last-modified and the file size.
+If there is no matching eTag found this means that the file is modified since eTag was and MD5 based on last-modified and the file size.
 Which you can also see clearly in the code here:
 ```py
    """Compose etag from last_modified and file_size"""
