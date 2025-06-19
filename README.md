@@ -71,6 +71,6 @@ curl -i -H "Range: bytes=0-" http://localhost:8000/video/demo.mp4
 - Streaming logs / analytics
 
 👤 Author
-Yavuz Akyazıcı – Full-stack developer & creator of [Jazz-A-Minute (JAM)](https://jazzaminute.com/)
+Yavuz Akyazıcı – Full-stack developer & creator of Jazz-A-Minute (JAM)  - [iOS](https://apps.apple.com/tr/app/j-a-m/id6504705021) & [Android](https://play.google.com/store/apps/details?id=com.jazzaminute&hl=en)
 
 This project is a simplified demo of the secure video delivery backend used in JAM.
